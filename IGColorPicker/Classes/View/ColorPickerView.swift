@@ -25,7 +25,8 @@ open class ColorPickerView: UIView, UICollectionViewDelegate, UICollectionViewDa
     // MARK: - Open properties
     
     /// Array of UIColor you want to show in the color picker
-    open var colors: [UIColor] = [#colorLiteral(red: 1, green: 0.5411764706, blue: 0.5019607843, alpha: 1), #colorLiteral(red: 1, green: 0.09019607843, blue: 0.2666666667, alpha: 1), #colorLiteral(red: 0.8352941176, green: 0, blue: 0, alpha: 1),
+    open var colors: [UIColor] = [UIColor.white,
+                                  #colorLiteral(red: 1, green: 0.5411764706, blue: 0.5019607843, alpha: 1), #colorLiteral(red: 1, green: 0.09019607843, blue: 0.2666666667, alpha: 1), #colorLiteral(red: 0.8352941176, green: 0, blue: 0, alpha: 1),
                                   #colorLiteral(red: 0.7254901961, green: 0.9647058824, blue: 0.7921568627, alpha: 1), #colorLiteral(red: 0, green: 0.9019607843, blue: 0.462745098, alpha: 1), #colorLiteral(red: 0, green: 0.7843137255, blue: 0.3254901961, alpha: 1),
                                   #colorLiteral(red: 0.9176470588, green: 0.5019607843, blue: 0.9882352941, alpha: 1), #colorLiteral(red: 0.8352941176, green: 0, blue: 0.9764705882, alpha: 1), #colorLiteral(red: 0.6666666667, green: 0, blue: 1, alpha: 1),
                                   #colorLiteral(red: 1, green: 1, blue: 0.5529411765, alpha: 1), #colorLiteral(red: 1, green: 0.9176470588, blue: 0, alpha: 1), #colorLiteral(red: 1, green: 0.8392156863, blue: 0, alpha: 1),
@@ -61,6 +62,10 @@ open class ColorPickerView: UIView, UICollectionViewDelegate, UICollectionViewDa
                     return
                 }
                 
+                if let oldIndex = _indexOfSelectedColor {
+                    collectionView.deselectItem(at: IndexPath(item: oldIndex, section: 0), animated: false)
+                }
+                
                 _indexOfSelectedColor = index
                 
                 collectionView.selectItem(at: IndexPath(item: index, section: 0), animated: false, scrollPosition: .centeredHorizontally)
@@ -79,7 +84,7 @@ open class ColorPickerView: UIView, UICollectionViewDelegate, UICollectionViewDa
     // MARK: - Private properties
     
     fileprivate var _indexOfSelectedColor: Int?
-    fileprivate lazy var collectionView: UICollectionView = {
+    public lazy var collectionView: UICollectionView = {
         
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
@@ -97,7 +102,17 @@ open class ColorPickerView: UIView, UICollectionViewDelegate, UICollectionViewDa
     
     // MARK: - View management
     
-    open override func layoutSubviews() {
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.setup()
+    }
+    
+    public required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+        self.setup()
+    }
+    
+    private func setup() {
         self.addSubview(collectionView)
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -105,6 +120,10 @@ open class ColorPickerView: UIView, UICollectionViewDelegate, UICollectionViewDa
         self.addConstraint(NSLayoutConstraint(item: collectionView, attribute: .leading, relatedBy: .equal, toItem: self, attribute: .leading, multiplier: 1.0, constant: 0))
         self.addConstraint(NSLayoutConstraint(item: collectionView, attribute: .bottom, relatedBy: .equal, toItem: self, attribute: .bottom, multiplier: 1.0, constant: 0))
         self.addConstraint(NSLayoutConstraint(item: collectionView, attribute: .trailing, relatedBy: .equal, toItem: self, attribute: .trailing, multiplier: 1.0, constant: 0))
+    }
+    
+    open override func layoutSubviews() {
+        super.layoutSubviews()
         
         // Check on scrollToPreselectedIndex
         if preselectedIndex != nil, !scrollToPreselectedIndex {
@@ -117,7 +136,17 @@ open class ColorPickerView: UIView, UICollectionViewDelegate, UICollectionViewDa
     
     private func _selectColor(at indexPath: IndexPath, animated: Bool) {
         
-        guard let colorPickerCell = collectionView.cellForItem(at: indexPath) as? ColorPickerCell else { return }
+        guard let colorPickerCell = collectionView.cellForItem(at: indexPath) as? ColorPickerCell else {
+            if let oldIndex = _indexOfSelectedColor {
+                if let oldColorCell = collectionView.cellForItem(at: IndexPath(row: oldIndex, section: 0)) as? ColorPickerCell {
+                    if selectionStyle == .check {
+                        oldColorCell.checkbox.setCheckState(.unchecked, animated: true)
+                    }
+                }
+            }
+            _indexOfSelectedColor = indexPath.item
+            return
+        }
         
         if indexPath.item == _indexOfSelectedColor, !isSelectedColorTappable {
             return
@@ -133,6 +162,14 @@ open class ColorPickerView: UIView, UICollectionViewDelegate, UICollectionViewDa
                 return
             }
             
+            if let oldIndex = _indexOfSelectedColor {
+                if let oldColorCell = collectionView.cellForItem(at: IndexPath(row: oldIndex, section: 0)) as? ColorPickerCell {
+                    if selectionStyle == .check {
+                        oldColorCell.checkbox.setCheckState(.unchecked, animated: true)
+                    }
+                }
+            }
+            
             _indexOfSelectedColor = indexPath.item
             
             colorPickerCell.checkbox.tintColor = colors[indexPath.item].isWhiteText ? .white : .black
@@ -145,6 +182,12 @@ open class ColorPickerView: UIView, UICollectionViewDelegate, UICollectionViewDa
     }
     
     // MARK: - Public Methods
+    
+    public func select(color: UIColor, animated: Bool) {
+        if let index = self.colors.index(of: color) {
+            self.selectColor(at: index, animated: animated)
+        }
+    }
     
     public func selectColor(at index: Int, animated: Bool) {
         self._selectColor(at: IndexPath(row: index, section: 0),
