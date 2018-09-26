@@ -211,6 +211,9 @@ open class ColorPickerView: UIView, UICollectionViewDelegate, UICollectionViewDa
             cell.layer.cornerRadius = cell.bounds.width / 2
         }
         
+        cell.layer.borderWidth = 1.5
+        cell.layer.borderColor = UIColor.white.cgColor
+        
         return cell
     }
     
