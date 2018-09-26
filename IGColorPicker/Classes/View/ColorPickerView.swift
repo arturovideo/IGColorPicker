@@ -42,6 +42,7 @@ open class ColorPickerView: UIView, UICollectionViewDelegate, UICollectionViewDa
             if colors.isEmpty {
                 fatalError("ERROR ColorPickerView - You must set at least 1 color!")
             }
+            collectionView.reloadData()
         }
     }
     /// The object that acts as the layout delegate for the color picker
